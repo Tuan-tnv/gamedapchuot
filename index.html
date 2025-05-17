@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game Đập Chuột</title>
+  <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+    }
+    body {
+      touch-action: manipulation;
+      overflow-x: hidden;
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      text-align: center;
+      background: linear-gradient(to bottom, #d0f0fd, #fef6e4);
+      margin: 0;
+      padding: 0;
+    }
+    h1 {
+      margin-top: 20px;
+      color: #333;
+      text-shadow: 1px 1px #fff;
+    }
+    #instructions {
+      font-size: 16px;
+      margin: 10px;
+      padding: 0 10px;
+      color: #444;
+    }
+    #game {
+      width: 90vw;
+      max-width: 330px;
+      height: 90vw;
+      max-height: 330px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      margin: 20px auto;
+      gap: 5px;
+    }
+    .hole {
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      position: relative;
+      cursor: pointer;
+      border-radius: 10px;
+      border: 2px solid #fff;
+    }
+    .hole:nth-child(1) { background-color: #FFDAB9; }
+    .hole:nth-child(2) { background-color: #E6E6FA; }
+    .hole:nth-child(3) { background-color: #98FB98; }
+    .hole:nth-child(4) { background-color: #FFB6C1; }
+    .hole:nth-child(5) { background-color: #FFFACD; }
+    .hole:nth-child(6) { background-color: #AFEEEE; }
+    .hole:nth-child(7) { background-color: #FFD700; }
+    .hole:nth-child(8) { background-color: #D8BFD8; }
+    .hole:nth-child(9) { background-color: #F0E68C; }
+    .mole {
+      width: 60%;
+      height: 60%;
+      position: absolute;
+      top: 20%;
+      left: 20%;
+    }
+    #scoreBoard, #timer, #result {
+      font-size: 20px;
+      margin: 5px 0;
+    }
+    #retryBtn, #startBtn {
+      margin: 10px 5px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #ff6f61;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #retryBtn {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <body>
+  <div style="margin-top: 10px; font-size: 20px; font-weight: bold; color: orange;">
+  FPT POLYSCHOOL HCM
+</div>
+  <h1>Game Đập Chuột</h1>
+  <div id="instructions">
+    🕹️ Cách chơi: Sau mỗi 1 giây, một con chuột sẽ xuất hiện ngẫu nhiên trong lưới. Hãy nhanh tay chạm vào chuột để ghi điểm! Bạn có 20 giây để đạt ít nhất 20 điểm và giành chiến thắng.
+  </div>
+  <div id="scoreBoard">Điểm: 0</div>
+  <div id="timer">Thời gian: 20</div>
+  <div id="game"></div>
+  <div id="result"></div>
+  <button id="startBtn" onclick="startGame()">Bắt đầu chơi</button>
+  <button id="retryBtn" onclick="startGame()">Chơi lại</button>
+  <audio id="bgMusic" loop>
+    <source src="https://www.bensound.com/bensound-music/bensound-funkyelement.mp3" type="audio/mpeg">
+  </audio>
+
+  <script>
+    const gameBoard = document.getElementById('game');
+    const scoreBoard = document.getElementById('scoreBoard');
+    const resultDisplay = document.getElementById('result');
+    const timerDisplay = document.getElementById('timer');
+    const retryBtn = document.getElementById('retryBtn');
+    const startBtn = document.getElementById('startBtn');
+    const bgMusic = document.getElementById('bgMusic');
+    let score = 0;
+    let currentMole;
+    let gameInterval;
+    let countdownInterval;
+    const gameDuration = 20000;
+    let timeLeft = 20;
+
+    function setupHoles() {
+      gameBoard.innerHTML = '';
+      for (let i = 0; i < 9; i++) {
+        const hole = document.createElement('div');
+        hole.classList.add('hole');
+        hole.dataset.index = i;
+        gameBoard.appendChild(hole);
+      }
+      document.querySelectorAll('.hole').forEach(hole => {
+        hole.addEventListener('touchstart', hitMole);
+        hole.addEventListener('click', hitMole);
+      });
+    }
+
+    function randomMole() {
+  document.querySelectorAll('.hole').forEach(hole => hole.innerHTML = '');
+  const moleCount = Math.floor(Math.random() * 3) + 1; // 1 đến 5 con chuột
+  const usedIndexes = new Set();
+
+  while (usedIndexes.size < moleCount) {
+    const index = Math.floor(Math.random() * 9);
+    if (!usedIndexes.has(index)) {
+      usedIndexes.add(index);
+      const mole = document.createElement('img');
+      mole.src = 'photo/chuot-anime.png';
+      mole.classList.add('mole');
+      document.querySelectorAll('.hole')[index].appendChild(mole);
+    }
+  }
+}
+
+    function hitMole(e) {
+      if (e.target.classList.contains('mole')) {
+        score++;
+        scoreBoard.textContent = `Điểm: ${score}`;
+        e.target.remove();
+      }
+    }
+
+    function startGame() {
+      score = 0;
+      timeLeft = 20;
+      scoreBoard.textContent = 'Điểm: 0';
+      timerDisplay.textContent = 'Thời gian: 20';
+      resultDisplay.textContent = '';
+      retryBtn.style.display = 'none';
+      startBtn.style.display = 'none';
+      setupHoles();
+      bgMusic.play();
+
+      gameInterval = setInterval(randomMole, 1000);
+
+      countdownInterval = setInterval(() => {
+        timeLeft--;
+        timerDisplay.textContent = `Thời gian: ${timeLeft}`;
+        if (timeLeft <= 0) {
+          endGame();
+        }
+      }, 1000);
+    }
+
+    function endGame() {
+      clearInterval(gameInterval);
+      clearInterval(countdownInterval);
+      bgMusic.pause();
+      bgMusic.currentTime = 0;
+      document.querySelectorAll('.hole').forEach(hole => hole.innerHTML = '');
+      if (score >= 20) {
+        resultDisplay.textContent = '🎉 Chúc mừng! Bạn đã chiến thắng!';
+      } else {
+        resultDisplay.textContent = '😢 Hãy thử lại để đạt trên 10 điểm nhé!';
+        retryBtn.style.display = 'inline-block';
+      }
+      startBtn.style.display = 'inline-block';
+    }
+  </script>
+</body>
+</html>
